@@ -2,6 +2,7 @@ using Core.Services;
 using System.Text.Json;
 using WebAPI;
 using WebAPI.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,10 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IDataService, DataService>();
 builder.Services.AddScoped<Core.Logic>();
+
+builder.Services.AddDbContext<DataService>(options => {
+   options.UseInMemoryDatabase("Gorky");
+});
 
 builder.Services.AddControllers()
    .AddJsonOptions(options => {
@@ -26,6 +31,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment()) {
    app.UseSwagger();
    app.UseSwaggerUI();
+
+   using var scope = app.Services.CreateScope();
+   using var data = scope.ServiceProvider.GetRequiredService<DataService>();
+   data.Database.EnsureCreated();
 }
 
 app.UseHttpsRedirection();
